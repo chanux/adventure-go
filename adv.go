@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"github.com/mgutz/ansi"
 	"net/http"
@@ -15,6 +16,12 @@ const (
     <style>body{background:black;color:green}</style>
     </head><body><pre>`
 	HTMLEND = `</pre></body></html>`
+)
+
+var (
+	delay   int
+	tplPath string
+	port    string
 )
 
 func isCliClient(ua string) bool {
@@ -34,7 +41,7 @@ func render(w http.ResponseWriter, r *http.Request) {
 	green := ansi.ColorCode("green")
 	reset := ansi.ColorCode("reset")
 
-	f, err := os.Open("templates/adventure.txt")
+	f, err := os.Open(tplPath)
 	if err != nil {
 		panic(err)
 	}
@@ -59,7 +66,7 @@ func render(w http.ResponseWriter, r *http.Request) {
 		} else {
 			fmt.Println("Damn, no flush")
 		}
-		time.Sleep(20 * time.Millisecond)
+		time.Sleep(time.Duration(delay) * time.Millisecond)
 	}
 
 	if cli {
@@ -70,6 +77,11 @@ func render(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	flag.StringVar(&port, "p", "9000", "Port to listen on")
+	flag.StringVar(&tplPath, "t", "templates/adventure.txt", "Path to template file")
+	flag.IntVar(&delay, "d", 20, "Delay between lines")
+	flag.Parse()
+
 	http.HandleFunc("/adventure", render)
-	http.ListenAndServe(":9000", nil)
+	http.ListenAndServe(":"+port, nil)
 }
